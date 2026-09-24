@@ -94,6 +94,17 @@ export function buildRecallMarkdown(results: readonly RecallResult[]): string {
   ].join("\n");
 }
 
+/** A non-2xx response, with the status so callers can special-case it. */
+export class HindsightHttpError extends Error {
+  readonly status: number;
+
+  constructor(status: number, path: string, detail: string) {
+    super(`Hindsight HTTP ${status} from ${path}: ${detail}`);
+    this.name = "HindsightHttpError";
+    this.status = status;
+  }
+}
+
 /** Thin HTTP client for Hindsight's memory REST API. */
 export class HindsightRestClient {
   private readonly baseUrl: string;
@@ -130,7 +141,7 @@ export class HindsightRestClient {
       });
       if (!resp.ok) {
         const text = await resp.text().catch(() => "");
-        throw new Error(`Hindsight HTTP ${resp.status} from ${path}: ${text}`);
+        throw new HindsightHttpError(resp.status, path, text);
       }
       return (await resp.json()) as T;
     } catch (error) {
@@ -146,7 +157,11 @@ export class HindsightRestClient {
     return `/v1/default/banks/${encodeURIComponent(bankId)}`;
   }
 
-  /** Recall memories for a bank. `query` is required by the API. */
+  /**
+   * Recall memories for a bank. `query` is required by the API. A bank that
+   * does not exist yet (nothing has been retained into it) has no memories,
+   * so its 404 is returned as an empty result rather than an error.
+   */
   async recall(bankId: string, query: string, opts: RecallOptions = {}): Promise<RecallResponse> {
     const body: Record<string, unknown> = {
       query,
@@ -154,12 +169,17 @@ export class HindsightRestClient {
       max_tokens: opts.maxTokens ?? 1024,
     };
     if (opts.types) body["types"] = opts.types;
-    return this.request<RecallResponse>(
-      "POST",
-      `${this.bankPath(bankId)}/memories/recall`,
-      body,
-      opts.signal
-    );
+    try {
+      return await this.request<RecallResponse>(
+        "POST",
+        `${this.bankPath(bankId)}/memories/recall`,
+        body,
+        opts.signal
+      );
+    } catch (error) {
+      if (error instanceof HindsightHttpError && error.status === 404) return { results: [] };
+      throw error;
+    }
   }
 
   /** Retain items into a bank. The bank is auto-created on first retain. */

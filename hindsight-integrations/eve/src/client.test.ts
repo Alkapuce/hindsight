@@ -64,6 +64,23 @@ describe("HindsightRestClient.retain", () => {
   });
 });
 
+describe("HindsightRestClient.recall on a missing bank", () => {
+  it("treats a 404 as no memories, since retain creates the bank on first write", async () => {
+    mockFetchOnce(404, { detail: "Bank 'b' not found" });
+    const client = new HindsightRestClient("http://localhost:8000", null);
+    await expect(client.recall("b", "q")).resolves.toEqual({ results: [] });
+  });
+
+  it("still surfaces other statuses with their code", async () => {
+    mockFetchOnce(503, { detail: "down" });
+    const client = new HindsightRestClient("http://localhost:8000", null);
+    await expect(client.recall("b", "q")).rejects.toMatchObject({
+      name: "HindsightHttpError",
+      status: 503,
+    });
+  });
+});
+
 describe("HindsightRestClient.reflect", () => {
   it("POSTs the question to the reflect path with a low budget by default", async () => {
     const fetchFn = mockFetchOnce(200, { text: "You prefer tabs." });

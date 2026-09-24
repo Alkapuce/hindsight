@@ -14,11 +14,11 @@ Long-term memory for [Vercel Eve](https://eve.dev) agents using [Hindsight](http
 
 Eve resolves and locks a scope for every turn, then calls the provider at fixed points:
 
-| Phase            | What Hindsight does                                                                                 |
-| ---------------- | --------------------------------------------------------------------------------------------------- |
+| Phase            | What Hindsight does                                                                                |
+| ---------------- | -------------------------------------------------------------------------------------------------- |
 | `turn.started`   | Recalls memories relevant to the user's message and places them in context, attributed to the slot |
-| `turn.completed` | Retains the user message and the assistant's final reply (idempotent per Eve operation id)          |
-| tools            | Exposes `<slot>__reflect`, so the model can ask long-term memory a question when it needs to        |
+| `turn.completed` | Retains the user message and the assistant's final reply (idempotent per Eve operation id)         |
+| tools            | Exposes `<slot>__reflect`, so the model can ask long-term memory a question when it needs to       |
 
 Every read and write is partitioned by the locked scope key: one Hindsight bank per scope, auto-created on first use. Two tenants can never see each other's memory.
 
@@ -71,25 +71,25 @@ provider: hindsightMemory({ apiUrl: "http://localhost:8000", apiKey: null }),
 `scope` is Eve's — `byPrincipal` gives each authenticated caller their own memory; a custom resolver can scope by tenant, channel, or anything else in trusted session metadata (see [Eve's memory docs](https://eve.dev/docs/memory)). Hindsight maps each locked scope to a bank:
 
 - **Default:** the bank is the scope key (`memscope1_…`), an opaque digest Eve derives from the namespace and scope. Isolation is automatic.
-- **Custom:** pass a resolver to name banks yourself, e.g. `bankId: (scope) => \`eve-${scope.value}\`` for human-readable bank names in the Hindsight dashboard.
+- **Custom:** pass a resolver to name banks yourself, e.g. ``bankId: (scope) => `eve-${scope.value}` `` for human-readable bank names in the Hindsight dashboard.
 - **Shared:** a string `bankId` (or `HINDSIGHT_BANK_ID`) pins every scope to a single bank. Only do this for single-user agents — it disables per-scope isolation.
 
 ## Options
 
 ```ts
 hindsightMemory({
-  apiUrl,      // REST base; defaults to HINDSIGHT_API_URL, then Cloud
-  apiKey,      // bearer token; null = no auth (local dev)
-  bankId,      // string | (scope) => string — see "Scope → bank"
-  budget,      // "low" | "mid" | "high" — recall result budget (default "mid")
-  maxTokens,   // recall token budget (default 1024)
+  apiUrl, // REST base; defaults to HINDSIGHT_API_URL, then Cloud
+  apiKey, // bearer token; null = no auth (local dev)
+  bankId, // string | (scope) => string — see "Scope → bank"
+  budget, // "low" | "mid" | "high" — recall result budget (default "mid")
+  maxTokens, // recall token budget (default 1024)
   recallQuery, // query when the turn has no user text (default: a broad profile query)
-  context,     // `context` tag written on retained items (default "eve")
+  context, // `context` tag written on retained items (default "eve")
   includeAssistantReply, // also retain the assistant's reply (default true)
-  capture,     // retain each turn (default true; false = recall-only)
-  tools,       // expose the `reflect` tool (default true)
-  timeoutMs,   // HTTP timeout (default 15000)
-  onError,     // (err, phase) => void — failures degrade silently (default console.warn)
+  capture, // retain each turn (default true; false = recall-only)
+  tools, // expose the `reflect` tool (default true)
+  timeoutMs, // HTTP timeout (default 15000)
+  onError, // (err, phase) => void — failures degrade silently (default console.warn)
 });
 ```
 
@@ -98,6 +98,17 @@ hindsightMemory({
 - Recall never fails a turn: a Hindsight error is reported through `onError` and the turn runs without memory. Captures run asynchronously and never block a reply.
 - Each turn's recall is one message with a stable id, so it **supersedes** the previous turn's block instead of piling up in session history — including after compaction.
 - Captures are keyed by Eve's `operationId`; a replayed capture replaces the earlier document rather than storing it twice.
+
+## Known issue: capture on eve 0.51.0 – 0.66.x
+
+eve 0.51.0 stopped passing the turn's history to `turn.completed` (a regression from
+[vercel/eve#2690](https://github.com/vercel/eve/pull/2690)), so **no provider's
+`capture["turn.completed"]` runs** on those versions — memory is recalled but nothing new is
+stored. Tracked in [vercel/eve#3223](https://github.com/vercel/eve/issues/3223) with a fix in
+[vercel/eve#3465](https://github.com/vercel/eve/pull/3465). Recall, the `reflect` tool, and
+compaction capture are unaffected. Until the fix ships, either pin `eve@0.50.0`, or keep the
+deprecated `hindsightRetainHook()` in `agent/hooks/hindsight.ts` next to the provider — eve's hook
+events still fire — giving both the same string `bankId` so they share a bank.
 
 ## Verify
 

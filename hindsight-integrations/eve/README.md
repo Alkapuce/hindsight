@@ -78,7 +78,7 @@ resolver can scope by tenant, channel, or anything else in trusted session metad
 
 - **Default:** the bank is the scope key (`memscope1_…`), an opaque digest Eve derives from the
   namespace and scope. Isolation is automatic.
-- **Custom:** pass a resolver to name banks yourself, e.g. `bankId: (scope) => \`eve-${scope.value}\``
+- **Custom:** pass a resolver to name banks yourself, e.g. ``bankId: (scope) => `eve-${scope.value}` ``
   for human-readable bank names in the Hindsight dashboard.
 - **Shared:** a string `bankId` (or `HINDSIGHT_BANK_ID`) pins every scope to a single bank. Only
   do this for single-user agents — it disables per-scope isolation.
@@ -113,6 +113,17 @@ hindsightMemory({
 - By default **both** the user's message and the assistant's reply are retained — the reply is
   usually where the answer lives. Set `includeAssistantReply: false` to store only the user's
   message.
+
+## Known issue: capture on eve 0.51.0 – 0.66.x
+
+eve 0.51.0 stopped passing the turn's history to `turn.completed` (a regression from
+[vercel/eve#2690](https://github.com/vercel/eve/pull/2690)), so **no provider's
+`capture["turn.completed"]` runs** on those versions — memory is recalled but nothing new is
+stored. Tracked in [vercel/eve#3223](https://github.com/vercel/eve/issues/3223) with a fix in
+[vercel/eve#3465](https://github.com/vercel/eve/pull/3465). Recall, the `reflect` tool, and
+compaction capture are unaffected. Until the fix ships, either pin `eve@0.50.0`, or keep the
+deprecated `hindsightRetainHook()` in `agent/hooks/hindsight.ts` next to the provider — eve's hook
+events still fire — giving both the same string `bankId` so they share a bank.
 
 ## Verify
 

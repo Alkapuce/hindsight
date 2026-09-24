@@ -54,6 +54,7 @@ export {
 
 export {
   HindsightRestClient,
+  HindsightHttpError,
   buildRecallMarkdown,
   stripSentinelBlocks,
   type RecallResult,
