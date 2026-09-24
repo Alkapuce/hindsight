@@ -66,17 +66,17 @@ The magic happens when memory accumulates. A single session's insight becomes co
 
 ### Setting Up Hindsight with ChatGPT (Desktop & Web)
 
-ChatGPT Plus and Team accounts support MCP via **Connectors**, a secure way to link external tools like Hindsight.
+ChatGPT supports MCP via **Connectors**, a secure way to link external tools like Hindsight.
 
 **Requirements:**
-- ChatGPT Plus or Team subscription
-- [Enable Developer Mode](https://platform.openai.com/account/api-keys) for beta features (optional; not needed for basic Connector use)
+- A ChatGPT Plus, Pro, Business, Enterprise or Edu plan (custom MCP connectors are not on the free tier)
+- **Developer mode** turned on in ChatGPT settings. Custom MCP servers require it; on Business and Enterprise an admin may need to allow it first
 
 **Steps:**
 
 1. Go to [ChatGPT Settings](https://chatgpt.com/settings)
-2. Navigate to **Apps & Connectors → Connectors**
-3. Click **Create connector**
+2. Open **Apps & Connectors** (called **Connectors** or **Plugins** on some plans) and turn on **Developer mode**
+3. Click **Create connector** (or **New plugin**)
 4. Fill in:
  - **Name:** `Hindsight` (or your preferred name)
  - **URL:** `https://api.hindsight.vectorize.io/mcp/YOUR_BANK_ID/`

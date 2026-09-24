@@ -20,17 +20,28 @@ ChatGPT's built-in memory helps with preferences, but knowledge from specific co
 
 ### 2. Add Hindsight as a Connector in ChatGPT
 
+**Requirements**
+
+- A ChatGPT Plus, Pro, Business, Enterprise or Edu plan. Custom MCP connectors are not available on the free tier.
+- **Developer mode** turned on. Custom MCP servers are a developer-mode feature. On Business and Enterprise plans an admin may have to allow it first, which is the most common reason the option is missing.
+
+**Steps**
+
 1. Go to [ChatGPT Settings](https://chatgpt.com/settings)
-2. Navigate to **Apps & Connectors → Connectors**
-3. Click **Create connector**
-4. Fill in:
+2. Open **Apps & Connectors** (on some plans this section is still called **Connectors** or **Plugins**)
+3. Turn on **Developer mode** if it isn't already
+4. Click **Create** (labelled **Create connector** or **New plugin** depending on your plan)
+5. Fill in:
    - **Name:** `Hindsight` (or your preferred name)
    - **URL:** `https://api.hindsight.vectorize.io/mcp/default/`
-5. Click **Create** — a browser window opens for Hindsight Cloud login
-6. Sign in to [Hindsight Cloud](https://ui.hindsight.vectorize.io) and approve access
-7. Return to ChatGPT; the connector is now active
+   - **Authentication:** OAuth
+6. Click **Create** — a browser window opens for Hindsight Cloud login
+7. Sign in to [Hindsight Cloud](https://ui.hindsight.vectorize.io) and approve access
+8. Return to ChatGPT; the connector is now active
 
 To use in a chat: click **+** in the message composer → **More** → select **Hindsight**
+
+ChatGPT's settings menus change between plans and rollouts, so the labels above may not match yours exactly. Whatever the menu is called, the steps are the same: turn on Developer mode, create a connector or plugin, paste the Hindsight MCP URL, choose OAuth.
 
 ### 3. Configure Custom Instructions for Automatic Retention
 
@@ -141,6 +152,17 @@ You can revoke access anytime by removing the connector in ChatGPT settings.
 - Make sure you're signing in with the same Hindsight Cloud account where you want to store memories
 - If using a team account, verify you have permission to access the bank
 - Try logging out and back in
+
+**"OAuth callback error" or "State cookie was missing"**
+- This happens in the Hindsight Cloud sign-in step, usually because the login popup ChatGPT opened could not keep its cookie (private window, strict cookie blocking, or a second browser profile)
+- Sign in to [Hindsight Cloud](https://ui.hindsight.vectorize.io) in the same browser first, then delete and re-create the connector in ChatGPT
+- Don't start the flow twice: if a login popup is already open, finish it before clicking **Create** again
+- If it still fails, send support the exact error text and which sign-in you used (GitHub, Google or email)
+
+**Can't find "Apps & Connectors", "Developer mode" or "Create connector"**
+- Check your plan: custom connectors need Plus, Pro, Business, Enterprise or Edu
+- On Business and Enterprise, an admin has to enable Developer mode for the workspace
+- The menu names vary; look for **Connectors** or **Plugins** under Settings
 
 **"Memory tools appear but don't return results"**
 - Give Hindsight a few seconds to index memories (processing is async)

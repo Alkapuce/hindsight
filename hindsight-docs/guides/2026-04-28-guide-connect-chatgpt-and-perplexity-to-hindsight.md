@@ -28,7 +28,7 @@ That matters because these integrations are only half finished if the connector 
 
 ## Connect ChatGPT first
 
-In ChatGPT, go to **Settings**, then **Apps & Connectors**, then create a connector pointed at:
+In ChatGPT, go to **Settings**, then **Apps & Connectors** (the section is called **Connectors** or **Plugins** on some plans), turn on **Developer mode**, then create a connector pointed at:
 
 ```text
 https://api.hindsight.vectorize.io/mcp/default/
