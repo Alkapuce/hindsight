@@ -69,18 +69,19 @@ The magic happens when memory accumulates. A single session's insight becomes co
 ChatGPT supports MCP via **Connectors**, a secure way to link external tools like Hindsight.
 
 **Requirements:**
-- A ChatGPT Plus, Pro, Business, Enterprise or Edu plan (custom MCP connectors are not on the free tier)
+- A ChatGPT plan that allows custom MCP servers (OpenAI documents Plus, Pro, Business, Enterprise and Edu)
 - **Developer mode** turned on in ChatGPT settings. Custom MCP servers require it; on Business and Enterprise an admin may need to allow it first
 
 **Steps:**
 
-1. Go to [ChatGPT Settings](https://chatgpt.com/settings)
-2. Open **Apps & Connectors** (called **Connectors** or **Plugins** on some plans) and turn on **Developer mode**
-3. Click **Create connector** (or **New plugin**)
-4. Fill in:
+1. Go to [ChatGPT Settings](https://chatgpt.com/#settings) → **Plugins** (called **Apps & Connectors** or **Connectors** on some builds) and turn on **Developer mode**
+2. Click **Browse plugins**, then **+** → **Upload plugin**, then **Create MCP App**
+3. Fill in:
  - **Name:** `Hindsight` (or your preferred name)
  - **URL:** `https://api.hindsight.vectorize.io/mcp/YOUR_BANK_ID/`
  - Replace `YOUR_BANK_ID` with your memory bank name (or `default`)
+ - **Authentication:** OAuth
+4. Tick the acknowledgement
 5. Click **Create**, a browser window opens for Hindsight Cloud login
 6. Sign in to [Hindsight Cloud](https://ui.hindsight.vectorize.io) and approve access
 7. Return to ChatGPT; the connector is now active
