@@ -83,7 +83,9 @@ export interface RetainCursor {
    *  runtime holds its turns in memory and leaves this unset). One session can move between files
    *  — Codex writes a continuation rollout under the same `session_meta.id` (#4493) — and the new
    *  file starts at that segment rather than repeating the earlier one. Without this the differing
-   *  prefix reads as a rewritten transcript and the replace drops everything already retained. */
+   *  prefix reads as a rewritten transcript and the replace drops everything already retained.
+   *  A cursor written before this field existed also has none, so a session already in flight when
+   *  the plugin was upgraded keeps the old replace behaviour until its next write-back sets it. */
   path?: string;
   /** The server answered that it can take appends. Cached so later write-backs skip the probe. */
   appendSupported?: boolean;
