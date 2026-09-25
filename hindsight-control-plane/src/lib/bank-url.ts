@@ -41,8 +41,8 @@ export function memoryApi(memoryId: string, bankId: string, suffix = ""): string
  * `%2F` back to `/` during path normalization (Azure Container Apps, AWS ALB), which
  * splits the id across segments and 404s the route. Query strings are left alone.
  */
-export function documentApi(documentId: string, bankId: string, action = ""): string {
-  return `/api/documents${action}?bank_id=${enc(bankId)}&document_id=${enc(documentId)}`;
+export function documentApi(documentId: string, bankId: string, suffix = ""): string {
+  return `/api/documents${suffix}?bank_id=${enc(bankId)}&document_id=${enc(documentId)}`;
 }
 
 /** Control-plane proxy URL for a single chunk. See `documentApi` on why the id is a query param. */

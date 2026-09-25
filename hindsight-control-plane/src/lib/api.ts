@@ -1047,9 +1047,10 @@ export class ControlPlaneClient {
     limit?: number;
     offset?: number;
   }) {
-    const queryParams = new URLSearchParams();
-    if (params.limit) queryParams.append("limit", params.limit.toString());
-    if (params.offset) queryParams.append("offset", params.offset.toString());
+    const queryParams = new URLSearchParams({
+      limit: String(params.limit ?? 100),
+      offset: String(params.offset ?? 0),
+    });
     return this.fetchApi<{
       items: Array<{
         chunk_id: string;
@@ -1062,11 +1063,7 @@ export class ControlPlaneClient {
       total: number;
       limit: number;
       offset: number;
-    }>(
-      [documentApi(params.document_id, params.bank_id, "/chunks"), queryParams.toString()]
-        .filter(Boolean)
-        .join("&")
-    );
+    }>(`${documentApi(params.document_id, params.bank_id, "/chunks")}&${queryParams}`);
   }
 
   /**

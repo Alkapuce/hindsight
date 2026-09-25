@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { localizeApiErrorPayload, missingQueryParam } from "@/lib/i18n/api-errors";
-import { DATAPLANE_URL, getDataplaneHeaders } from "@/lib/hindsight-client";
+import { dataplaneBankUrl, getDataplaneHeaders } from "@/lib/hindsight-client";
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     if (!documentId) return missingQueryParam(request, "document_id");
 
     const response = await fetch(
-      `${DATAPLANE_URL}/v1/default/banks/${encodeURIComponent(bankId)}/documents/${encodeURIComponent(documentId)}/reprocess`,
+      dataplaneBankUrl(bankId, `/documents/${encodeURIComponent(documentId)}/reprocess`),
       {
         method: "POST",
         headers: getDataplaneHeaders({ "Content-Type": "application/json" }),

@@ -1,15 +1,16 @@
 import type { NextRequest } from "next/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 type ListDocumentsArg = { query: Record<string, unknown> };
 
-const { listDocuments, getDocument } = vi.hoisted(() => ({
+const { listDocuments, getDocument, deleteDocument } = vi.hoisted(() => ({
   listDocuments: vi.fn<(arg: ListDocumentsArg) => Promise<unknown>>(),
   getDocument: vi.fn<(arg: { path: Record<string, unknown> }) => Promise<unknown>>(),
+  deleteDocument: vi.fn<(arg: { path: Record<string, unknown> }) => Promise<unknown>>(),
 }));
 
 vi.mock("@/lib/hindsight-client", () => ({
-  sdk: { listDocuments, getDocument },
+  sdk: { listDocuments, getDocument, deleteDocument },
   lowLevelClient: {},
   dataplaneBankUrl: (bankId: string, suffix: string) => `http://dataplane/${bankId}${suffix}`,
   getDataplaneHeaders: () => ({}),
@@ -19,7 +20,7 @@ vi.mock("@/lib/sdk-response", () => ({
   respondWithSdk: vi.fn(() => new Response(null, { status: 200 })),
 }));
 
-import { GET } from "@/app/api/documents/route";
+import { DELETE, GET, PATCH } from "@/app/api/documents/route";
 
 function makeRequest(url: string): NextRequest {
   // The route only reads `request.nextUrl.searchParams`.
@@ -91,5 +92,48 @@ describe("GET /api/documents", () => {
       bank_id: "b1",
       document_id: "folder/sub/doc.pdf",
     });
+  });
+});
+
+// Regression for #4586: every single-document operation takes the id from the query
+// string, so a slash-bearing id survives an ingress that decodes `%2F` back to `/`.
+describe("single-document operations on /api/documents", () => {
+  const slashId = "folder/sub/doc.pdf";
+  const encoded = encodeURIComponent(slashId);
+
+  beforeEach(() => {
+    deleteDocument.mockReset();
+    deleteDocument.mockResolvedValue({ data: {}, error: undefined });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("DELETE passes the id through to the dataplane intact", async () => {
+    await DELETE(makeRequest(`http://localhost/api/documents?bank_id=b1&document_id=${encoded}`));
+
+    expect(deleteDocument.mock.calls[0][0].path).toMatchObject({
+      bank_id: "b1",
+      document_id: slashId,
+    });
+  });
+
+  it("PATCH re-encodes the id for the dataplane path", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response("{}", { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await PATCH({
+      nextUrl: new URL(`http://localhost/api/documents?bank_id=b1&document_id=${encoded}`),
+      json: async () => ({ tags: ["a"] }),
+    } as unknown as NextRequest);
+
+    expect(fetchMock.mock.calls[0][0]).toBe(`http://dataplane/b1/documents/${encoded}`);
+  });
+
+  it("rejects a PATCH with no document_id", async () => {
+    const response = await PATCH(makeRequest("http://localhost/api/documents?bank_id=b1"));
+
+    expect(response.status).toBe(400);
   });
 });
