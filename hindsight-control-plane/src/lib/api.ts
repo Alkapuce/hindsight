@@ -4,7 +4,7 @@
  */
 
 import { toast } from "sonner";
-import { bankApi, bankStatsApi, documentApi, memoryApi } from "./bank-url";
+import { bankApi, bankStatsApi, chunkApi, documentApi, memoryApi } from "./bank-url";
 import { stripBasePath, withBasePath } from "./base-path";
 
 /**
@@ -1048,7 +1048,6 @@ export class ControlPlaneClient {
     offset?: number;
   }) {
     const queryParams = new URLSearchParams();
-    queryParams.append("bank_id", params.bank_id);
     if (params.limit) queryParams.append("limit", params.limit.toString());
     if (params.offset) queryParams.append("offset", params.offset.toString());
     return this.fetchApi<{
@@ -1063,7 +1062,11 @@ export class ControlPlaneClient {
       total: number;
       limit: number;
       offset: number;
-    }>(`/api/documents/${params.document_id}/chunks?${queryParams}`);
+    }>(
+      [documentApi(params.document_id, params.bank_id, "/chunks"), queryParams.toString()]
+        .filter(Boolean)
+        .join("&")
+    );
   }
 
   /**
@@ -1074,7 +1077,7 @@ export class ControlPlaneClient {
       success: boolean;
       operation_id: string;
       items_count: number;
-    }>(`/api/documents/${encodeURIComponent(documentId)}/reprocess?bank_id=${bankId}`, {
+    }>(documentApi(documentId, bankId, "/reprocess"), {
       method: "POST",
     });
   }
@@ -1249,7 +1252,7 @@ export class ControlPlaneClient {
    * Get chunk
    */
   async getChunk(chunkId: string) {
-    return this.fetchApi(`/api/chunks/${chunkId}`);
+    return this.fetchApi(chunkApi(chunkId));
   }
 
   /**
