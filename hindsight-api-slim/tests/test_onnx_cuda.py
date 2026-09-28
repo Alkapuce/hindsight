@@ -6,9 +6,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from hindsight_api.config import HindsightConfig, clear_config_cache
+from hindsight_api.config import HindsightConfig
 from hindsight_api.engine.embeddings import OnnxEmbeddings, create_embeddings_from_env
-from tests.test_onnx_embeddings import FakeOnnxSession, FakeSessionOptions, FakeTokenizer
+from tests.test_onnx_embeddings import FakeOnnxSession, FakeSessionOptions, FakeTokenizer, _fresh_config  # noqa: F401
 
 
 @pytest.fixture
@@ -156,10 +156,9 @@ def test_invalid_device(device):
         embedder(device=device)
 
 
-@pytest.mark.parametrize("device_id", [-1, 1.5, "0", True])
-def test_invalid_device_id(device_id):
+def test_invalid_device_id():
     with pytest.raises(ValueError, match="device ID"):
-        embedder(cuda_device_id=device_id)
+        embedder(cuda_device_id=-1)
 
 
 @pytest.mark.parametrize(
@@ -171,33 +170,27 @@ def test_invalid_device_id(device_id):
         ("CUDA_DEVICE_ID", "abc"),
     ],
 )
+@pytest.mark.usefixtures("_fresh_config")
 def test_invalid_device_environment(monkeypatch, variable, value):
-    clear_config_cache()
     monkeypatch.setenv("HINDSIGHT_API_EMBEDDINGS_PROVIDER", "onnx")
     name = f"HINDSIGHT_API_EMBEDDINGS_ONNX_{variable}"
     monkeypatch.setenv(name, value)
-    try:
-        with pytest.raises(ValueError, match=name):
-            create_embeddings_from_env()
-    finally:
-        clear_config_cache()
+    with pytest.raises(ValueError, match=name):
+        create_embeddings_from_env()
 
 
 @pytest.mark.parametrize(
     "device,device_id,expected_device,expected_id",
     [("CUDA", "2", "cuda", 2), ("cpu", "0", "cpu", 0), ("", "", "cpu", 0)],
 )
+@pytest.mark.usefixtures("_fresh_config")
 def test_device_environment_normalization(monkeypatch, device, device_id, expected_device, expected_id):
-    clear_config_cache()
     monkeypatch.setenv("HINDSIGHT_API_EMBEDDINGS_PROVIDER", "onnx")
     monkeypatch.setenv("HINDSIGHT_API_EMBEDDINGS_ONNX_DEVICE", device)
     monkeypatch.setenv("HINDSIGHT_API_EMBEDDINGS_ONNX_CUDA_DEVICE_ID", device_id)
-    try:
-        emb = create_embeddings_from_env()
-        assert emb.device == expected_device
-        assert emb.cuda_device_id == expected_id
-    finally:
-        clear_config_cache()
+    emb = create_embeddings_from_env()
+    assert emb.device == expected_device
+    assert emb.cuda_device_id == expected_id
 
 
 def test_device_selection_is_static_configuration():

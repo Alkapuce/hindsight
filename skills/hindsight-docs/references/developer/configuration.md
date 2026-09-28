@@ -925,13 +925,13 @@ pip install 'hindsight-api-slim[local-onnx]'
 uv sync --project hindsight-api-slim --extra local-onnx
 ```
 
-CUDA execution is opt-in. Set `HINDSIGHT_API_EMBEDDINGS_ONNX_DEVICE=cuda` only in an environment that has a compatible `onnxruntime-gpu` wheel and CUDA/cuDNN runtime. The official images intentionally keep the CPU runtime and do not grow when this feature is unused. For a Docker deployment, use the ready-to-build recipe at `docker/docker-compose/cuda-onnx/`, which installs the GPU wheel into a private image based on the slim image:
+CUDA execution is opt-in. Set `HINDSIGHT_API_EMBEDDINGS_ONNX_DEVICE=cuda` only in an environment that has a compatible `onnxruntime-gpu` wheel and CUDA/cuDNN runtime. The official images intentionally keep the CPU runtime and do not grow when this feature is unused. For a Docker deployment, use the ready-to-build recipe at [`docker/docker-compose/cuda-onnx/`](https://github.com/vectorize-io/hindsight/tree/main/docker/docker-compose/cuda-onnx), which installs the GPU wheel into a private image based on the slim image:
 
 ```bash
 docker compose -f docker/docker-compose/cuda-onnx/docker-compose.yaml up --build
 ```
 
-The recipe accepts `BASE_IMAGE`, `ONNXRUNTIME_GPU_VERSION`, and `HINDSIGHT_API_EMBEDDINGS_ONNX_CUDA_DEVICE_ID` for release, runtime, and device selection. Hindsight fails startup when CUDA is requested but the provider is unavailable or the initialized session does not activate it; it does not silently fall back to CPU in that mode. The recipe installs CUDA/cuDNN libraries in the private image; the host needs a compatible NVIDIA driver and GPU passthrough. Individual operators may still run on CPU through normal graph partitioning. See the recipe README for dependency isolation, unreleased-checkout builds, and real GPU tests.
+The recipe accepts `BASE_IMAGE`, `ONNXRUNTIME_GPU_VERSION`, and `HINDSIGHT_API_EMBEDDINGS_ONNX_CUDA_DEVICE_ID` for release, runtime, and device selection. Hindsight fails startup when CUDA is requested but the provider is unavailable or the initialized session does not activate it; it does not silently fall back to CPU in that mode. The recipe installs CUDA/cuDNN libraries in the private image; the host needs a compatible NVIDIA driver and GPU passthrough. Individual operators may still run on CPU through normal graph partitioning. See the [recipe README](https://github.com/vectorize-io/hindsight/tree/main/docker/docker-compose/cuda-onnx) for dependency isolation, unreleased-checkout builds, and real GPU tests.
 
 You can either let Hindsight download the model from Hugging Face at startup by setting `HINDSIGHT_API_EMBEDDINGS_ONNX_MODEL_ID`, or pre-download the ONNX graph and tokenizer files under the Hindsight repository root.
 

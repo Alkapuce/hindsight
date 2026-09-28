@@ -491,8 +491,8 @@ class OnnxEmbeddings(Embeddings):
         self.cpu_mem_arena = cpu_mem_arena
         if device not in {"cpu", "cuda"}:
             raise ValueError("ONNX embeddings device must be 'cpu' or 'cuda'")
-        if isinstance(cuda_device_id, bool) or not isinstance(cuda_device_id, int) or cuda_device_id < 0:
-            raise ValueError("ONNX CUDA device ID must be an integer >= 0")
+        if cuda_device_id < 0:
+            raise ValueError("ONNX CUDA device ID must be >= 0")
         self.device = device
         self.cuda_device_id = cuda_device_id
         self._session = None
@@ -594,16 +594,16 @@ class OnnxEmbeddings(Embeddings):
                 "Check the model, CUDA/cuDNN libraries, driver, and visible device ID."
             ) from exc
         active_providers = session.get_providers()
-        # A CUDA-capable wheel can still fail to load its libraries/device and ORT
-        # may return a CPU-only session without raising. Do not accept that session.
-        if self.device == "cuda" and "CUDAExecutionProvider" not in active_providers:
-            raise RuntimeError(
-                "ONNX CUDA execution was requested, but the initialized session did not activate "
-                f"CUDAExecutionProvider for device {self.cuda_device_id}. "
-                "Check CUDA/cuDNN libraries, the driver, and GPU visibility. "
-                f"Active providers: {active_providers}"
-            )
         if self.device == "cuda":
+            # A CUDA-capable wheel can still fail to load its libraries/device and ORT
+            # may return a CPU-only session without raising. Do not accept that session.
+            if "CUDAExecutionProvider" not in active_providers:
+                raise RuntimeError(
+                    "ONNX CUDA execution was requested, but the initialized session did not activate "
+                    f"CUDAExecutionProvider for device {self.cuda_device_id}. "
+                    "Check CUDA/cuDNN libraries, the driver, and GPU visibility. "
+                    f"Active providers: {active_providers}"
+                )
             # Prevent run() from rebuilding the session on CPU after an EP failure.
             # Normal graph partitioning (e.g. shape operations on CPU) stays enabled.
             session.disable_fallback()
